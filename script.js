@@ -84,7 +84,6 @@ ballB.previousVelocity = { x: ballB.velocity.x, y: ballB.velocity.y };
 
 let ballAInitialVelocity = { x: 0, y: 0 };
 let ballBInitialVelocity = { x: 0, y: 0 };
-let cueInitialVelocity = { x: 0, y: 0 };
 
 Matter.Events.on(engine, 'collisionStart', function (event) {
     var pairs = event.pairs;
@@ -92,8 +91,6 @@ Matter.Events.on(engine, 'collisionStart', function (event) {
 
     pairs.forEach((pair) => {
         const { bodyA, bodyB } = pair;
-        console.log(bodyA)
-        console.log(bodyB)
 
         if ((bodyA === ballA && bodyB === ballB) || (bodyB === ballA && bodyA === ballB)) {
             ballA.previousVelocity = { x: ballA.velocity.x, y: ballA.velocity.y };
@@ -111,8 +108,7 @@ Matter.Events.on(engine, 'collisionEnd', function (event) {
        
 
         if ((bodyA === ballA && bodyB === ballB) || (bodyB === ballA && bodyA === ballB)) {
-            console.log(bodyA.velocity)
-            console.log(bodyB.velocity)
+
             var bodyA_mass = pair.bodyA.mass;
             var bodyB_mass = pair.bodyB.mass;
             var bodyA_speed_change = Math.hypot(pair.bodyA.velocity.x - pair.bodyA.previousVelocity.x, pair.bodyA.velocity.y - pair.bodyA.previousVelocity.y);
@@ -166,7 +162,7 @@ densityBDisplay.addEventListener('change', (e) => {
 frictionInput.addEventListener('change', (e) => {
     frictionDisplay.value = e.target.value
     const friction = parseFloat(e.target.value);
-    
+
     Matter.Body.set(ballA, 'friction', friction);
     Matter.Body.set(ballB, 'friction', friction);
     Matter.Body.set(ground, 'friction', friction);
@@ -236,8 +232,6 @@ render.canvas.addEventListener('mouseup', (e) => {
         const forceDirection = { x: dx * forceMagnitude, y: dy * forceMagnitude };
 
         Matter.Body.applyForce(ballA, ballA.position, forceDirection);
-
-        World.remove(world, [cue]);
 
         mouseStart = null;
  
