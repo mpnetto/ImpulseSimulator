@@ -1,7 +1,11 @@
 
 const { Engine, Render, World, Runner, Bodies, MouseConstraint, Mouse, Constraint } = Matter;
 
-const engine = Engine.create();
+var engine = Engine.create({
+    positionIterations: 8,
+    velocityIterations: 8,
+});
+// engine.timing.timeScale = 0.8;
 const { world } = engine;
 engine.world.gravity.y = 0;
 
@@ -35,6 +39,7 @@ Matter.World.add(engine.world, [ground, roof, leftWall, rightWall,]);
 
 let ballA = Bodies.circle(150, 200, 20, {
     density: 0.04,
+    inertia: Infinity,
     restitution: 1,
     frictionAir: 0.01,
     render: {
@@ -44,6 +49,7 @@ let ballA = Bodies.circle(150, 200, 20, {
 
 let ballB = Bodies.circle(450, 200, 20, {
     density: 0.04,
+    inertia: Infinity,
     restitution: 1,
     frictionAir: 0.01,
     render: {
