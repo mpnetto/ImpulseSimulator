@@ -1,11 +1,142 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Simulação colisão de particulas.js</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.17.1/matter.min.js"></script>
-        <script src="https://d3js.org/d3.v5.min.js"></script>
-        <script src="script.js" defer></script>
-    </head>
-    <body>
-    </body>
+
+<head>
+    <title>Simulação de força de impacto e impulso</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.17.1/matter.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+    <div class="ui container ">
+        <div class="ui inverted segment">
+            <div class="ui inverted secondary pointing menu">
+                <a class="item">
+                    Simulação de força de impacto e impulso
+                </a>
+                <div class="right menu">
+                    <a id="pauseButton" class="ui item">
+                        Parar
+                    </a>
+                    <a id="resetButton" class="ui item">
+                        Reiniciar
+                    </a>
+                    <a class="ui item">
+                        Sobre
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="ui grid ">
+            <div class="eight wide column col-6">
+                <div class="ui grid">
+                    <div class="row">
+                        <div class="column">
+
+                            <div class="ui two column stackable grid container">
+                                <div class="column">
+                                    <div class="ui card">
+                                        <div class="content">
+                                            <div class="header">Bola Branca</div>
+                                        </div>
+                                        <div class="content">
+                                            <p>Velocidade: <span id="ballASpeed"></span></p>
+                                            <p>Momentum: <span id="ballAMomentum"></span></p>
+                                            <p>Energia cinética: <span id="ballAKinetic"></span></p>
+                                            <p>Força de impacto: <span id="ballAImpactForce"></span></p>
+                                            <p>
+                                                Elasticidade:
+                                                <input style="width: 50px;" type="number" id="elasticityADisplay"
+                                                    min="0" max="1" step="0.1" value="1" />
+                                                <!-- <input type="range" id="elasticity" min="0" max="1" step="0.1" value="1" /> -->
+                                            </p>
+                                            <p>
+                                                Massa:
+                                                <input style="width: 50px;" type="number" id="densityADisplay" min="10"
+                                                    max="1000" step="10" value="50" />
+
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="column">
+                                    <div class="ui card">
+                                        <div class="content">
+                                            <div class="header">Bola Vermelha</div>
+                                        </div>
+                                        <div class="content">
+                                            <p>Velocidade: <span id="ballBSpeed"></span></p>
+                                            <p>Momentum: <span id="ballBMomentum"></span></p>
+                                            <p>Energia cinética: <span id="ballBKinetic"></span></p>
+                                            <p>Força de impacto: <span id="ballBImpactForce"></span></p>
+                                            <p>
+                                                Elasticidade:
+                                                <input style="width: 50px;" type="number" id="elasticityBDisplay"
+                                                    min="0" max="1" step="0.1" value="1" />
+                                                <!-- <input type="range" id="elasticity" min="0" max="1" step="0.1" value="1" /> -->
+                                            </p>
+                                            <p>
+                                                Massa:
+                                                <input style="width: 50px;" type="number" id="densityBDisplay" min="10"
+                                                    max="1000" step="10" value="50" />
+
+                                            </p>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                            <!-- <div class="row ">
+
+                                <div id="ballAMass"></div>
+                                <div id="ballBMass"></div>
+                                <div id="ballASpeed"></div>
+                                <div id="ballBSpeed"></div>
+                                <div id="ballAMomentum"></div>
+                                <div id="ballBMomentum"></div>
+                                <div id="ballAKinetic"></div>
+                                <div id="ballBKinetic"></div>
+                                <div id="totalKinetic"></div>
+                            </div> -->
+                            <div class="ui grid">
+                                <div class="row " style="margin-inline: 20px;">
+
+
+                                    <div class="content ">
+                                        <p>Força aplicada: <span id="ballAForce"></span></p>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="ui segment" id="poolTable" style="width: fit-content;"></div>
+
+                        </div>
+                    </div>
+                    <div class="ui grid">
+                        <div class="row ">
+                            <div id="controls" class="ui segment column " style="width: fit-content;">
+                                <div class="content ">
+                                    <h3>Propriedades ambiente</h3>
+                                    <p>
+                                        Fricção:
+                                        <input style="width: 50px;" type="number" id="frictionDisplay" min="0" max="1"
+                                            step="0.01" value="0.01" />
+                                        <input type="range" id="friction" min="0" max="1" step="0.01" value="0.01" />
+                                    </p>
+                                    <p>Energia cinética total: <span id="totalKinetic"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
 </html>
