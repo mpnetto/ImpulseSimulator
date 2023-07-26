@@ -2,10 +2,9 @@
 const { Engine, Render, World, Runner, Bodies, MouseConstraint, Mouse, Constraint } = Matter;
 
 var engine = Engine.create({
-    positionIterations: 8,
-    velocityIterations: 8,
+    positionIterations: 50,
+    velocityIterations: 10,
 });
-// engine.timing.timeScale = 0.8;
 const { world } = engine;
 engine.world.gravity.y = 0;
 
@@ -111,7 +110,7 @@ Matter.Events.on(engine, 'collisionEnd', function (event) {
 
     pairs.forEach((pair) => {
         const { bodyA, bodyB } = pair;
-       
+
 
         if ((bodyA === ballA && bodyB === ballB) || (bodyB === ballA && bodyA === ballB)) {
 
@@ -122,13 +121,13 @@ Matter.Events.on(engine, 'collisionEnd', function (event) {
             var impactForceA = bodyA_mass * bodyA_speed_change;
             var impactForceB = bodyB_mass * bodyB_speed_change;
 
-            impactForceADisplay.textContent =  impactForceA.toFixed(2);
+            impactForceADisplay.textContent = impactForceA.toFixed(2);
 
             impactForceBDisplay.textContent = impactForceB.toFixed(2);
 
             pair.bodyA.previousVelocity = { x: pair.bodyA.velocity.x, y: pair.bodyA.velocity.y };
             pair.bodyB.previousVelocity = { x: pair.bodyB.velocity.x, y: pair.bodyB.velocity.y };
-            
+
         }
     })
 });
@@ -156,6 +155,7 @@ densityADisplay.addEventListener('change', (e) => {
 });
 
 elasticityBDisplay.addEventListener('change', (e) => {
+    const elasticity = parseFloat(e.target.value);
     Matter.Body.set(ballB, 'restitution', elasticity);
 });
 
@@ -222,7 +222,7 @@ render.canvas.addEventListener('mousemove', (e) => {
 
         const forceMagnitude = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2)) * 4;
 
-        forceADisplay.textContent =  forceMagnitude.toFixed(2);
+        forceADisplay.textContent = forceMagnitude.toFixed(2);
 
     }
 });
@@ -240,7 +240,7 @@ render.canvas.addEventListener('mouseup', (e) => {
         Matter.Body.applyForce(ballA, ballA.position, forceDirection);
 
         mouseStart = null;
- 
+
     }
 });
 
@@ -300,7 +300,218 @@ function calculateKineticEnergy(body) {
     return kineticEnergy;
 }
 
-// // Agora vamos atualizar a posição do taco para seguir a bola 1
+let startTime = Date.now();
+
+let svgWidth = 400, svgHeight = 200, margin = { top: 20, right: 20, bottom: 30, left: 50 };
+let wid = svgWidth - margin.left - margin.right;
+let hei = svgHeight - margin.top - margin.bottom;
+
+
+// Criando o SVG
+let svg = d3.select("#kineticEnergyChart").append("svg")
+    .attr("width", svgWidth)
+    .attr("height", svgHeight);
+
+// Configurando os grupos
+let g = svg.append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+// Configurando escalas
+let x = d3.scaleLinear().rangeRound([0, wid]);
+let y = d3.scaleLinear().rangeRound([hei, 0]);
+
+// Configurando a linha
+let line = d3.line()
+    .x(function (d) { return x(d.time); })
+    .y(function (d) { return y(d.kineticEnergy); });
+
+// Configurando os eixos
+let xAxis = g.append("g")
+    .attr("transform", "translate(0," + hei + ")");
+let yAxis = g.append("g");
+
+svg.append("text")
+    .attr("x", svgWidth / 2)
+    .attr("y", svgHeight)
+    .attr("text-anchor", "middle")
+    .text("Tempo");
+
+svg.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -svgHeight / 2)
+    .attr("y", 0)
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .text("Energia Cinética Total")
+
+
+let kineticEnergyData = [];
+
+
+function renderKinectGraph() {
+    let totalKineticEnergy = calculateKineticEnergy(ballA) + calculateKineticEnergy(ballB);
+
+    let currentTime = (Date.now() - startTime) / 1000;
+
+    let maxTotalKineticEnergy = d3.max(kineticEnergyData, d => d.kineticEnergy);
+
+    if (currentTime > 5) {
+        kineticEnergyData.shift();
+    }
+
+    kineticEnergyData.push({ time: currentTime, kineticEnergy: totalKineticEnergy });
+
+    x.domain(d3.extent(kineticEnergyData, function (d) { return d.time; }));
+
+    if (maxTotalKineticEnergy > 50000) {
+        y.domain([0, 100000]);
+    } else if (maxTotalKineticEnergy > 40000) {
+        y.domain([0, 50000]);
+    } else if (maxTotalKineticEnergy > 30000) {
+        y.domain([0, 40000]);
+    } else if (maxTotalKineticEnergy > 20000) {
+        y.domain([0, 30000]);
+    } else if (maxTotalKineticEnergy > 15000) {
+        y.domain([0, 20000]);
+    } else if (maxTotalKineticEnergy > 10000) {
+        y.domain([0, 15000]);
+    } else if (maxTotalKineticEnergy > 5000) {
+        y.domain([0, 10000]);
+    } else if (maxTotalKineticEnergy > 1000) {
+        y.domain([0, 5000]);
+    } else if (maxTotalKineticEnergy > 500) {
+        y.domain([0, 1000]);
+    } else if (maxTotalKineticEnergy > 200) {
+        y.domain([0, 500]);
+    }
+
+    else {
+        y.domain([0, 200]);
+    }
+
+    xAxis.call(d3.axisBottom(x));
+    yAxis.call(d3.axisLeft(y));
+
+    svg.selectAll("path").remove();
+
+
+    g.append("path")
+        .datum(kineticEnergyData)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", line);
+}
+
+let svgM = d3.select("#momentumEnergyChart").append("svg")
+    .attr("width", svgWidth)
+    .attr("height", svgHeight);
+
+let gM = svgM.append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+let xM = d3.scaleLinear().rangeRound([0, wid]);
+let yM = d3.scaleLinear().rangeRound([hei, 0]);
+
+let lineM = d3.line()
+    .x(function (d) { return xM(d.time); })
+    .y(function (d) { return yM(d.momentum); });
+
+// Configurando os eixos
+let xAxisM = gM.append("g")
+    .attr("transform", "translate(0," + hei + ")");
+
+let yAxisM = gM.append("g");
+
+svgM.append("text")
+    .attr("x", svgWidth / 2)
+    .attr("y", svgHeight)
+    .attr("text-anchor", "middle")
+    .text("Tempo");
+
+svgM.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -svgHeight / 2)
+    .attr("y", 0)
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .text("Momentum Total")
+
+let momentumData = [];
+
+
+function renderMomentumGraph() {
+    let totalMomentum = calculateMomentum(ballA) + calculateMomentum(ballB);
+
+    console.log(totalMomentum)
+
+    let currentTime = (Date.now() - startTime) / 1000;
+
+
+
+    if (currentTime > 5) {
+        momentumData.shift();
+    }
+
+    momentumData.push({ time: currentTime, momentum: totalMomentum });
+
+    let maxTotalMomentum = d3.max(momentumData, d => d.momentum);
+
+    xM.domain(d3.extent(momentumData, function (d) { return d.time; }));
+
+    console.log(maxTotalMomentum)
+
+    if (maxTotalMomentum > 50000) {
+        yM.domain([0, 100000]);
+    } else if (maxTotalMomentum > 40000) {
+        yM.domain([0, 50000]);
+    } else if (maxTotalMomentum > 30000) {
+        yM.domain([0, 40000]);
+    } else if (maxTotalMomentum > 20000) {
+        yM.domain([0, 30000]);
+    } else if (maxTotalMomentum > 15000) {
+        yM.domain([0, 20000]);
+    } else if (maxTotalMomentum > 10000) {
+        yM.domain([0, 15000]);
+    } else if (maxTotalMomentum > 5000) {
+        yM.domain([0, 10000]);
+    } else if (maxTotalMomentum > 1000) {
+        yM.domain([0, 5000]);
+    } else if (maxTotalMomentum > 500) {
+        yM.domain([0, 1000]);
+    } else if (maxTotalMomentum > 200) {
+        yM.domain([0, 500]);
+    }
+
+    else {
+        yM.domain([0, 200]);
+    }
+
+    xAxisM.call(d3.axisBottom(xM));
+    yAxisM.call(d3.axisLeft(yM));
+
+    svgM.selectAll("path").remove();
+
+    gM.append("path")
+        .datum(momentumData)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", lineM);
+}
+
+
+setInterval(function () {
+    renderKinectGraph()
+    renderMomentumGraph()
+
+}, 1);
+
 Matter.Events.on(render, 'afterRender', function () {
     if (mouseStart) {
         drawForceArrow()
@@ -321,6 +532,8 @@ Matter.Events.on(render, 'afterRender', function () {
     kineticADisplay.textContent = `${kineticA.toFixed(2)}`;
     kineticBDisplay.textContent = `${kineticB.toFixed(2)}`;
 
-    kineticTotalDisplay.textContent = `${(kineticA + kineticB).toFixed(2)}`;
+    let totalKineticEnergy = (kineticA + kineticB).toFixed(2);
+    kineticTotalDisplay.textContent = totalKineticEnergy;
 
 });
+
