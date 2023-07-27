@@ -25,7 +25,8 @@ const render = Render.create({
 
 Matter.Resolver._restingThresh = 0.001;
 Render.run(render);
-Runner.run(Runner.create(), engine);
+const runner = Runner.create();
+Runner.run(runner, engine);
 Matter.Resolver._restingThresh = 0.001;
 
 let ground = Matter.Bodies.rectangle(400, 610, 810, 60, { isStatic: true, restitution: 1, friction: 0, render: { fillStyle: '#AA7744' } });
@@ -346,23 +347,31 @@ svg.append("text")
     .text("Energia Cinética Total")
 
 
-let kineticEnergyData = [];
+let kineticEnergyDataBallA = [];
+let kineticEnergyDataBallB = [];
 
 
 function renderKinectGraph() {
-    let totalKineticEnergy = calculateKineticEnergy(ballA) + calculateKineticEnergy(ballB);
+    let kineticEnergyBallA = calculateKineticEnergy(ballA);
+    let kineticEnergyBallB = calculateKineticEnergy(ballB);
+    // let totalKineticEnergy = calculateKineticEnergy(ballA) + calculateKineticEnergy(ballB);
 
     let currentTime = (Date.now() - startTime) / 1000;
 
-    let maxTotalKineticEnergy = d3.max(kineticEnergyData, d => d.kineticEnergy);
+    let maxKineticEnergyBallA = d3.max(kineticEnergyDataBallA, d => d.kineticEnergy);
+    let maxKineticEnergyBallB = d3.max(kineticEnergyDataBallB, d => d.kineticEnergy);
+
+    let maxTotalKineticEnergy = Math.max(maxKineticEnergyBallA, maxKineticEnergyBallB);
 
     if (currentTime > 5) {
-        kineticEnergyData.shift();
+        kineticEnergyDataBallA.shift();
+        kineticEnergyDataBallB.shift();
     }
 
-    kineticEnergyData.push({ time: currentTime, kineticEnergy: totalKineticEnergy });
+    kineticEnergyDataBallA.push({ time: currentTime, kineticEnergy: kineticEnergyBallA });
+    kineticEnergyDataBallB.push({ time: currentTime, kineticEnergy: kineticEnergyBallB });
 
-    x.domain(d3.extent(kineticEnergyData, function (d) { return d.time; }));
+    x.domain(d3.extent(kineticEnergyDataBallA, function (d) { return d.time; }));
 
     if (maxTotalKineticEnergy > 50000) {
         y.domain([0, 100000]);
@@ -397,9 +406,18 @@ function renderKinectGraph() {
 
 
     g.append("path")
-        .datum(kineticEnergyData)
+        .datum(kineticEnergyDataBallA)
         .attr("fill", "none")
         .attr("stroke", "steelblue")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", line);
+
+    g.append("path")
+        .datum(kineticEnergyDataBallB)
+        .attr("fill", "none")
+        .attr("stroke", "red")
         .attr("stroke-linejoin", "round")
         .attr("stroke-linecap", "round")
         .attr("stroke-width", 1.5)
@@ -440,29 +458,32 @@ svgM.append("text")
     .style("text-anchor", "middle")
     .text("Momentum Total")
 
-let momentumData = [];
+let momentumDataBallA = [];
+let momentumDataBallB = [];
 
 
 function renderMomentumGraph() {
-    let totalMomentum = calculateMomentum(ballA) + calculateMomentum(ballB);
-
-    console.log(totalMomentum)
+    let momentumBallA = calculateMomentum(ballA);
+    let momentumBallB = calculateMomentum(ballB);
+    // let totalMomentum = calculateMomentum(ballA) + calculateMomentum(ballB);
+    // let totalMomentum = momentumBallA;
 
     let currentTime = (Date.now() - startTime) / 1000;
 
-
-
     if (currentTime > 5) {
-        momentumData.shift();
+        momentumDataBallA.shift();
+        momentumDataBallB.shift();
     }
 
-    momentumData.push({ time: currentTime, momentum: totalMomentum });
+    momentumDataBallA.push({ time: currentTime, momentum: momentumBallA });
+    momentumDataBallB.push({ time: currentTime, momentum: momentumBallB });
 
-    let maxTotalMomentum = d3.max(momentumData, d => d.momentum);
+    let maxTotalMomentumA = d3.max(momentumDataBallA, d => d.momentum);
+    let maxTotalMomentumB = d3.max(momentumDataBallB, d => d.momentum);
 
-    xM.domain(d3.extent(momentumData, function (d) { return d.time; }));
+    let maxTotalMomentum = Math.max(maxTotalMomentumA, maxTotalMomentumB);
 
-    console.log(maxTotalMomentum)
+    xM.domain(d3.extent(momentumDataBallA, function (d) { return d.time; }));
 
     if (maxTotalMomentum > 50000) {
         yM.domain([0, 100000]);
@@ -496,19 +517,36 @@ function renderMomentumGraph() {
     svgM.selectAll("path").remove();
 
     gM.append("path")
-        .datum(momentumData)
+        .datum(momentumDataBallA)
         .attr("fill", "none")
         .attr("stroke", "steelblue")
         .attr("stroke-linejoin", "round")
         .attr("stroke-linecap", "round")
         .attr("stroke-width", 1.5)
         .attr("d", lineM);
+
+    gM.append("path")
+        .datum(momentumDataBallB)
+        .attr("fill", "none")
+        .attr("stroke", "red")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", lineM);
 }
 
-
+let pauseTime = Date.now();
 setInterval(function () {
-    renderKinectGraph()
-    renderMomentumGraph()
+
+    if (!isPaused) {
+        pauseTime = Date.now();
+        renderKinectGraph()
+        renderMomentumGraph()
+    } else {
+        startTime += Date.now() - pauseTime
+        pauseTime = Date.now();
+    }
+
 
 }, 1);
 
@@ -536,4 +574,29 @@ Matter.Events.on(render, 'afterRender', function () {
     kineticTotalDisplay.textContent = totalKineticEnergy;
 
 });
+
+var pauseButton = document.getElementById('pauseButton');
+var isPaused = false;
+pauseButton.onclick = function () {
+    pauseSimulation();
+}
+
+document.addEventListener('keydown', function (event) {
+    if (event.keyCode === 32) {
+        event.preventDefault();
+        pauseSimulation();
+
+    }
+});
+
+function pauseSimulation() {
+    if (!isPaused) {
+        runner.enabled = false;
+        this.innerHTML = 'Resume';
+    } else {
+        runner.enabled = true;
+        this.innerHTML = 'Pause';
+    }
+    isPaused = !isPaused;
+}
 
