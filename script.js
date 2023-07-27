@@ -228,7 +228,7 @@ render.canvas.addEventListener('mousemove', (e) => {
     }
 });
 
-// Atualiza a força do impacto baseado na distância que o mouse foi arrastado
+
 render.canvas.addEventListener('mouseup', (e) => {
     if (mouseStart) {
 
@@ -293,7 +293,14 @@ function drawForceArrow() {
 }
 
 function calculateMomentum(body) {
-    return body.mass * body.speed;
+    console.log( Math.sqrt(Math.pow(calculateMom(body.mass, body.velocity.x), 2) + Math.pow(calculateMom(body.mass, body.velocity.x), 2)))
+
+    return Math.sqrt(Math.pow(calculateMom(body.mass, body.velocity.x), 2) + Math.pow(calculateMom(body.mass, body.velocity.x), 2));
+}
+
+function calculateMom(mass, speed) {
+
+    return mass * speed;
 }
 
 function calculateKineticEnergy(body) {
@@ -308,26 +315,20 @@ let wid = svgWidth - margin.left - margin.right;
 let hei = svgHeight - margin.top - margin.bottom;
 
 
-// Criando o SVG
 let svg = d3.select("#kineticEnergyChart").append("svg")
     .attr("width", svgWidth)
     .attr("height", svgHeight);
 
-// Configurando os grupos
 let g = svg.append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-
-// Configurando escalas
 let x = d3.scaleLinear().rangeRound([0, wid]);
 let y = d3.scaleLinear().rangeRound([hei, 0]);
 
-// Configurando a linha
 let line = d3.line()
     .x(function (d) { return x(d.time); })
     .y(function (d) { return y(d.kineticEnergy); });
 
-// Configurando os eixos
 let xAxis = g.append("g")
     .attr("transform", "translate(0," + hei + ")");
 let yAxis = g.append("g");
@@ -349,29 +350,30 @@ svg.append("text")
 
 let kineticEnergyDataBallA = [];
 let kineticEnergyDataBallB = [];
+let kineticEnergyDataTotal = [];
 
 
 function renderKinectGraph() {
     let kineticEnergyBallA = calculateKineticEnergy(ballA);
     let kineticEnergyBallB = calculateKineticEnergy(ballB);
-    // let totalKineticEnergy = calculateKineticEnergy(ballA) + calculateKineticEnergy(ballB);
+
+    let kineticEnergyBallTotal = kineticEnergyBallA + kineticEnergyBallB
 
     let currentTime = (Date.now() - startTime) / 1000;
 
-    let maxKineticEnergyBallA = d3.max(kineticEnergyDataBallA, d => d.kineticEnergy);
-    let maxKineticEnergyBallB = d3.max(kineticEnergyDataBallB, d => d.kineticEnergy);
-
-    let maxTotalKineticEnergy = Math.max(maxKineticEnergyBallA, maxKineticEnergyBallB);
+    let maxTotalKineticEnergy = d3.max(kineticEnergyDataTotal, d => d.kineticEnergy);
 
     if (currentTime > 5) {
         kineticEnergyDataBallA.shift();
         kineticEnergyDataBallB.shift();
+        kineticEnergyDataTotal.shift();
     }
 
     kineticEnergyDataBallA.push({ time: currentTime, kineticEnergy: kineticEnergyBallA });
     kineticEnergyDataBallB.push({ time: currentTime, kineticEnergy: kineticEnergyBallB });
+    kineticEnergyDataTotal.push({ time: currentTime, kineticEnergy: kineticEnergyBallTotal });
 
-    x.domain(d3.extent(kineticEnergyDataBallA, function (d) { return d.time; }));
+    x.domain(d3.extent(kineticEnergyDataTotal, function (d) { return d.time; }));
 
     if (maxTotalKineticEnergy > 50000) {
         y.domain([0, 100000]);
@@ -393,9 +395,7 @@ function renderKinectGraph() {
         y.domain([0, 1000]);
     } else if (maxTotalKineticEnergy > 200) {
         y.domain([0, 500]);
-    }
-
-    else {
+    } else {
         y.domain([0, 200]);
     }
 
@@ -418,6 +418,15 @@ function renderKinectGraph() {
         .datum(kineticEnergyDataBallB)
         .attr("fill", "none")
         .attr("stroke", "red")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", line);
+
+    g.append("path")
+        .datum(kineticEnergyDataTotal)
+        .attr("fill", "none")
+        .attr("stroke", "black")
         .attr("stroke-linejoin", "round")
         .attr("stroke-linecap", "round")
         .attr("stroke-width", 1.5)
@@ -460,28 +469,29 @@ svgM.append("text")
 
 let momentumDataBallA = [];
 let momentumDataBallB = [];
+let momentumDataTotal = [];
 
 
 function renderMomentumGraph() {
     let momentumBallA = calculateMomentum(ballA);
     let momentumBallB = calculateMomentum(ballB);
-    // let totalMomentum = calculateMomentum(ballA) + calculateMomentum(ballB);
-    // let totalMomentum = momentumBallA;
+    let totalMomentum = momentumBallA + momentumBallB;
+
 
     let currentTime = (Date.now() - startTime) / 1000;
 
     if (currentTime > 5) {
         momentumDataBallA.shift();
         momentumDataBallB.shift();
+        momentumDataTotal.shift();
     }
 
     momentumDataBallA.push({ time: currentTime, momentum: momentumBallA });
     momentumDataBallB.push({ time: currentTime, momentum: momentumBallB });
+    momentumDataTotal.push({ time: currentTime, momentum: totalMomentum });
 
-    let maxTotalMomentumA = d3.max(momentumDataBallA, d => d.momentum);
-    let maxTotalMomentumB = d3.max(momentumDataBallB, d => d.momentum);
+    let maxTotalMomentum = d3.max(momentumDataTotal, d => d.momentum);
 
-    let maxTotalMomentum = Math.max(maxTotalMomentumA, maxTotalMomentumB);
 
     xM.domain(d3.extent(momentumDataBallA, function (d) { return d.time; }));
 
@@ -529,6 +539,15 @@ function renderMomentumGraph() {
         .datum(momentumDataBallB)
         .attr("fill", "none")
         .attr("stroke", "red")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", lineM);
+
+    gM.append("path")
+        .datum(momentumDataTotal)
+        .attr("fill", "none")
+        .attr("stroke", "black")
         .attr("stroke-linejoin", "round")
         .attr("stroke-linecap", "round")
         .attr("stroke-width", 1.5)
